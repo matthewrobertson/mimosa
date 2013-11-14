@@ -38,8 +38,15 @@ handle_cast(Req, State) ->
   {noreply, State}.
 
 handle_info({tcp, _Port, Stuff}, State) ->
-  lager:info("~p", [Stuff]),
-  {noreply, State};
+  case mimosa_irc_command_parser:parse(Stuff) of
+    {ping, Server} ->
+      lager:info("got a ping"),
+      {noreply, State};
+    {_, X} ->
+      lager:info("=========== unhandled command ==============="),
+      lager:info("~p", [X]),
+      {noreply, State}
+  end;
 handle_info(Req, State) ->
   lager:info("Info IRC test"),
   {noreply, State}.
