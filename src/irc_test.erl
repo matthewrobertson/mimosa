@@ -20,8 +20,8 @@ stop(Pid) ->
 init([]) ->
   lager:info("Init IRC test"),
   {ok, Socket} = gen_tcp:connect("irc.freenode.net", 6667, [binary, {active,true}]),
-  gen_tcp:send(Socket, "Nick matthew_1\r\n"),
-  gen_tcp:send(Socket, "User matthew_1 8 * : Matthew Robertson\r\n"),
+  gen_tcp:send(Socket, "Nick matthew_abc\r\n"),
+  gen_tcp:send(Socket, "User matthew_abc 8 * : Matthew Robertson\r\n"),
   {ok, #state{socket=Socket}}.
 
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
