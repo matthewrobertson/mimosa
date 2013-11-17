@@ -6,6 +6,7 @@
 
 -export([start/0, stop/1]).
 
+-record(command, {type, prefix, params}).
 -record(state, {socket}).
 
 
@@ -22,15 +23,15 @@ send_message(Socket, Msg)->
 init([]) ->
   lager:info("Init IRC test"),
   {ok, Socket} = gen_tcp:connect("irc.freenode.net", 6667, [binary, {active,true}]),
-  send_message(Socket, mimosa_irc_message_builder:nick("matthew_abc")),
-  send_message(Socket, mimosa_irc_message_builder:user("matthew_abc", "Matt R")),
+  send_message(Socket, mimosa_irc_command_builder:nick("matthew_abc")),
+  send_message(Socket, mimosa_irc_command_builder:user("matthew_abc", "Matt R")),
   {ok, #state{socket=Socket}}.
 
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 handle_call(stop, _Caller, State) ->
   Socket = State#state.socket,
-  send_message(Socket, mimosa_irc_message_builder:quit()),
+  send_message(Socket, mimosa_irc_command_builder:quit()),
   {stop, normal, ok, State};
 handle_call(_Req, _Caller, State) ->
   lager:info("Call IRC test"),
@@ -41,17 +42,18 @@ handle_cast(_Req, State) ->
   {noreply, State}.
 
 handle_info({tcp, _Port, Stuff}, State) ->
-  case mimosa_irc_command_parser:parse(Stuff) of
-    {ping, Server} ->
+  Command = mimosa_irc_command_parser:parse(Stuff),
+  case Command of
+    #command{type=ping, params=Server} ->
       lager:info("got a ping"),
       Socket = State#state.socket,
-      send_message(Socket, mimosa_irc_message_builder:pong(Server)),
+      send_message(Socket, mimosa_irc_command_builder:pong(Server)),
       {noreply, State};
-    {privmsg, Msg} ->
-      lager:info("GOT A MESSAGE:"),
+    #command{type=privmsg, params=Msg, prefix=From} ->
+      lager:info("got a message from ~p", [From]),
       lager:info("~p", [Msg]),
       {noreply, State};
-    {_, X} ->
+    X ->
       lager:info("=========== unhandled command ==============="),
       lager:info("~p", [X]),
       {noreply, State}

@@ -1,4 +1,4 @@
--module(mimosa_irc_message_builder).
+-module(mimosa_irc_command_builder).
 
 -export([
     nick/1,
