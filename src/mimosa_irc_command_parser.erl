@@ -25,6 +25,8 @@ parse(<<"NOTICE", Suffix/binary>>, Result) ->
 parse(Command, _Result) ->
   {unknown, Command}.
 
+parse_params(<<" ", Params/binary>>) ->
+  parse_params(Params);
 parse_params(Params) ->
   binary:replace(Params, <<"\r\n">>, <<"">>).
 
