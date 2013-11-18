@@ -17,6 +17,7 @@ start() ->
 stop(Pid) ->
   gen_server:call(Pid, stop).
 
+%% BEGIN:: PUT THIS SHIT IN ITS OWN MODULE %%
 send_message(Socket, Msg)->
   gen_tcp:send(Socket, Msg).
 
@@ -34,17 +35,12 @@ run_command(Socket, Stuff) ->
       lager:info("~p", [X])
   end.
 
-run_commands(Socket, [Command|Rest]) ->
-  run_command(Socket, Command),
-  run_commands(Socket, Rest);
-run_commands(_Socket, []) ->
-  ok.
-
 handle_commands(Stuff, State) ->
   Socket = State#state.socket,
   Commands = binary:split(Stuff, <<"\r\n">>, [global, trim]),
-  run_commands(Socket, Commands).
-
+  Fun = fun(C) -> run_command(Socket, C) end,
+  lists:foreach(Fun, Commands).
+%% END:: PUT THIS SHIT IN ITS OWN MODULE %%
 
 init([]) ->
   lager:info("Init IRC test"),
